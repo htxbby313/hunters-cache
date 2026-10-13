@@ -195,20 +195,12 @@ const MyOrdersView = () => {
 /* ============================================================
    PROFILE SETTINGS VIEW
    ============================================================ */
-const ProfileSettingsView = () => {
-  const [region, setRegion] = useState('Southeast')
+const ProfileSettingsView = ({ currentUser }) => {
+  const [region, setRegion] = useState(currentUser?.location || 'Southeast')
   const [notifications, setNotifications] = useState({ email: true, push: true, sms: false, weekly: true })
 
   return (
-    <div className="profile-page">
-      <div className="profile-header">
-        <div className="profile-avatar-large">JD</div>
-        <div className="profile-info">
-          <h1>John Doe</h1>
-          <p className="tagline">Duck hunter · Arkansas · Member since 2025</p>
-        </div>
-      </div>
-
+    <div style={{ marginTop: 'var(--space-md)' }}>
       <div className="settings-section">
         <h3>Hunting Preferences</h3>
         <div className="form-group">
@@ -260,7 +252,7 @@ const ProfileSettingsView = () => {
 /* ============================================================
    REGIONAL HUNTING GUIDE VIEW
    ============================================================ */
-const RegionalGuideView = ({ onNavigate, items }) => {
+const RegionalGuideView = ({ onNavigate, items, currentUser }) => {
   const [selectedRegion, setSelectedRegion] = useState('Southeast')
   const seasons = SEASONAL_DATA[selectedRegion] || []
 
@@ -273,8 +265,15 @@ const RegionalGuideView = ({ onNavigate, items }) => {
             <span className="navbar-title">Hunter's <span className="accent">Cache</span></span>
           </a>
           <div className="navbar-links">
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('profile') }}>My Profile</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home') }}>Browse</a>
             <a href="#" className="active">Hunting Guide</a>
+            {currentUser && (
+              <>
+                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('sell') }}>Seller Dashboard</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('profile') }}>My Profile</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('messages') }}>Messages</a>
+              </>
+            )}
           </div>
           <div className="navbar-actions">
             <button className="btn btn-primary btn-sm" onClick={() => onNavigate('home')}>Browse Gear</button>
@@ -336,8 +335,11 @@ const RegionalGuideView = ({ onNavigate, items }) => {
 /* ============================================================
    BUYER PROFILE (TABBED: Orders + Settings)
    ============================================================ */
-const BuyerProfileView = ({ onNavigate }) => {
+const BuyerProfileView = ({ onNavigate, currentUser }) => {
   const [activeTab, setActiveTab] = useState('orders')
+  const displayName = currentUser?.displayName || currentUser?.display_name || 'Hunter'
+  const location = currentUser?.location || 'USA'
+  const initials = displayName.split(' ').map(n => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || 'HC'
 
   return (
     <>
@@ -348,9 +350,11 @@ const BuyerProfileView = ({ onNavigate }) => {
             <span className="navbar-title">Hunter's <span className="accent">Cache</span></span>
           </a>
           <div className="navbar-links">
-            <a href="#" className="active">My Profile</a>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('guide') }}>Hunting Guide</a>
             <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home') }}>Browse</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('guide') }}>Hunting Guide</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('sell') }}>Seller Dashboard</a>
+            <a href="#" className="active">My Profile</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('messages') }}>Messages</a>
           </div>
           <div className="navbar-actions">
             <button className="btn btn-outline btn-sm" onClick={() => onNavigate('home')}>← Back</button>
@@ -360,10 +364,10 @@ const BuyerProfileView = ({ onNavigate }) => {
 
       <div className="profile-page">
         <div className="profile-header">
-          <div className="profile-avatar-large">JD</div>
+          <div className="profile-avatar-large">{initials}</div>
           <div className="profile-info">
-            <h1>John Doe</h1>
-            <p className="tagline">Duck hunter · Stuttgart, AR · Member since 2025</p>
+            <h1>{displayName}</h1>
+            <p className="tagline">{location} · Member Account</p>
           </div>
         </div>
 
@@ -380,7 +384,7 @@ const BuyerProfileView = ({ onNavigate }) => {
         </div>
 
         {activeTab === 'orders' && <MyOrdersView />}
-        {activeTab === 'settings' && <ProfileSettingsView />}
+        {activeTab === 'settings' && <ProfileSettingsView currentUser={currentUser} />}
       </div>
     </>
   )
@@ -662,6 +666,13 @@ const SellerDashboard = ({ onNewListing, onNavigate, currentUser }) => {
             <img src="/assets/logo-icon.png" alt="Hunter's Cache" className="navbar-logo" />
             <span className="navbar-title">Seller <span className="accent">Dashboard</span></span>
           </a>
+          <div className="navbar-links">
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home') }}>Browse</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('guide') }}>Hunting Guide</a>
+            <a href="#" className="active">Seller Dashboard</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('profile') }}>My Profile</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('messages') }}>Messages</a>
+          </div>
           <div className="navbar-actions">
             <button className="btn btn-outline btn-sm" onClick={() => onNavigate('home')}>← Browse</button>
             <button className="btn btn-primary btn-sm" onClick={onNewListing}>+ New Listing</button>
@@ -673,10 +684,10 @@ const SellerDashboard = ({ onNewListing, onNavigate, currentUser }) => {
         {loading && <div className="loading-banner">Loading seller activity…</div>}
         <div className="dashboard-header">
           <div className="seller-avatar">
-            <div className="avatar-circle">{currentUser?.displayName?.slice(0, 2).toUpperCase() || 'OT'}</div>
+            <div className="avatar-circle">{(currentUser?.displayName || 'HC').split(' ').map(n => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || 'HC'}</div>
             <div>
-              <div className="seller-name">{currentUser?.displayName || 'Outdoor Trading Co.'}</div>
-              <div className="seller-status">✓ Verified Seller</div>
+              <div className="seller-name">{currentUser?.displayName || 'Seller Account'}</div>
+              <div className="seller-status">{currentUser?.identityStatus === 'verified' ? '✓ Verified Identity' : 'Member Account'}</div>
             </div>
           </div>
           <button className="btn btn-primary btn-sm" onClick={onNewListing}>+ Post New Listing</button>
@@ -1037,7 +1048,7 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
 /* ============================================================
    LISTING DETAIL VIEW
    ============================================================ */
-const DetailView = ({ item, onBack, onNavigate }) => {
+const DetailView = ({ item, onBack, onNavigate, currentUser, onRequireAuth }) => {
   const [marketPrice, setMarketPrice] = useState(null)
   const [offerStatus, setOfferStatus] = useState('')
   useEffect(() => {
@@ -1051,6 +1062,11 @@ const DetailView = ({ item, onBack, onNavigate }) => {
   }, [item])
   if (!item) return null
   const offerMarketPrice = async () => {
+    if (!currentUser) {
+      if (onRequireAuth) onRequireAuth('signup')
+      else onNavigate('profile')
+      return
+    }
     if (!marketPrice?.available) return
     setOfferStatus('Sending…')
     try {
@@ -1059,6 +1075,11 @@ const DetailView = ({ item, onBack, onNavigate }) => {
     } catch (error) { setOfferStatus(error.message) }
   }
   const contactSeller = async () => {
+    if (!currentUser) {
+      if (onRequireAuth) onRequireAuth('signup')
+      else onNavigate('profile')
+      return
+    }
     try { const conversation = await apiCall('/api/conversations', { method: 'POST', body: JSON.stringify({ listingId: item.id }) }); onNavigate('messages', conversation) }
     catch (error) { setOfferStatus(error.message) }
   }
@@ -1397,6 +1418,12 @@ function App() {
   }, [])
 
   const navigate = (view, item) => {
+    const protectedViews = ['sell', 'new-listing', 'profile', 'messages']
+    if (protectedViews.includes(view) && !currentUser) {
+      setAuthMode('signup')
+      setShowAuth(true)
+      return
+    }
     if (view === 'checkout') { setSelectedItem(item || selectedItem); setCurrentView('checkout') }
     else if (view === 'detail') { setSelectedItem(item); setCurrentView('detail') }
     else if (view === 'guide') { setCurrentView('guide') }
@@ -1427,10 +1454,14 @@ function App() {
           </a>
           <div className="navbar-links">
             <a href="#" className="active">Browse</a>
-            <a href="#" onClick={e=>{e.preventDefault();navigate('sell')}}>Sell</a>
-            <a href="#" onClick={e=>{e.preventDefault();navigate('profile')}}>My Profile</a>
-            <a href="#" onClick={e=>{e.preventDefault();navigate('messages')}}>Messages</a>
             <a href="#" onClick={e=>{e.preventDefault();navigate('guide')}}>Hunting Guide</a>
+            {currentUser && (
+              <>
+                <a href="#" onClick={e=>{e.preventDefault();navigate('sell')}}>Seller Dashboard</a>
+                <a href="#" onClick={e=>{e.preventDefault();navigate('profile')}}>My Profile</a>
+                <a href="#" onClick={e=>{e.preventDefault();navigate('messages')}}>Messages</a>
+              </>
+            )}
           </div>
           <div className="navbar-actions">
             {currentUser ? (
@@ -1449,13 +1480,13 @@ function App() {
       )}
 
       {currentView === 'home' && <HomeView items={items} categories={categories} onViewItem={handleViewItem} onNavigate={navigate} />}
-      {currentView === 'detail' && <DetailView item={selectedItem} onBack={handleBack} onNavigate={navigate} />}
+      {currentView === 'detail' && <DetailView item={selectedItem} onBack={handleBack} onNavigate={navigate} currentUser={currentUser} onRequireAuth={(mode) => { setAuthMode(mode || 'signup'); setShowAuth(true); }} />}
       {currentView === 'seller' && <PublicSellerProfile sellerRef={selectedSeller} onNavigate={navigate} onViewItem={handleViewItem} />}
       {currentView === 'sell' && <SellerDashboard onNewListing={()=>navigate('new-listing')} onNavigate={navigate} currentUser={currentUser} />}
       {currentView === 'new-listing' && <ListingForm onBack={()=>navigate('sell')} />}
       {currentView === 'checkout' && <CheckoutView item={selectedItem} onBack={handleBack} onNavigate={navigate} />}
-      {currentView === 'profile' && <BuyerProfileView onNavigate={navigate} />}
-      {currentView === 'guide' && <RegionalGuideView onNavigate={navigate} items={items} />}
+      {currentView === 'profile' && <BuyerProfileView onNavigate={navigate} currentUser={currentUser} />}
+      {currentView === 'guide' && <RegionalGuideView onNavigate={navigate} items={items} currentUser={currentUser} />}
       {currentView === 'messages' && <MessagingView initialConversation={selectedConversation} onNavigate={navigate} />}
 
       {showAuth && <AuthModal mode={authMode} onClose={() => setShowAuth(false)} onAuth={(user) => setCurrentUser(user)} />}
