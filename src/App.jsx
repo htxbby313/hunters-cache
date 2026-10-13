@@ -971,12 +971,36 @@ const ListingForm = ({ onBack }) => {
 }
 
 const HUNTER_SAYINGS = [
-  { saying: 'Wings cupped. Feet down.', tag: 'Waterfowl · Flooded Timber' },
-  { saying: 'Wind in your face, cold in the air.', tag: 'Big Game · Midwest Rut' },
-  { saying: 'Bugling in the dark timber.', tag: 'Elk · Rocky Mountain Divide' },
-  { saying: 'Heavy packs, earned miles.', tag: 'Backcountry · Western Ridges' },
-  { saying: "Hammerin' on the roost at first light.", tag: 'Turkey · Spring Woods' },
-  { saying: 'Lock ’em up. Take ’em.', tag: 'Waterfowl · Mississippi Flyway' },
+  {
+    saying: 'Wings cupped. Feet down.',
+    resaleLine: 'Resell the spread. Fund next season.',
+    badge: 'Waterfowl · Flooded Timber'
+  },
+  {
+    saying: 'Wind in your face, cold in the air.',
+    resaleLine: 'Sell what you outgrew. Buy what fits.',
+    badge: 'Big Game · Midwest Rut'
+  },
+  {
+    saying: 'Bugling in the dark timber.',
+    resaleLine: 'Turn unused gear into tag money.',
+    badge: 'Elk · Rocky Mountain Divide'
+  },
+  {
+    saying: 'Heavy packs, earned miles.',
+    resaleLine: 'Pass down gear with seasons left.',
+    badge: 'Backcountry · Western Ridges'
+  },
+  {
+    saying: "Hammerin' on the roost at first light.",
+    resaleLine: 'Trade pre-owned gear hunter-to-hunter.',
+    badge: 'Turkey · Spring Woods'
+  },
+  {
+    saying: 'Lock ’em up. Take ’em.',
+    resaleLine: 'The dedicated hunting gear resale market.',
+    badge: 'Waterfowl · Mississippi Flyway'
+  },
 ]
 
 /* ============================================================
@@ -985,11 +1009,16 @@ const HUNTER_SAYINGS = [
 const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
   const [activeCategory, setActiveCategory] = useState(null)
   const [sayingIdx, setSayingIdx] = useState(0)
+  const [fade, setFade] = useState(true)
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setSayingIdx(prev => (prev + 1) % HUNTER_SAYINGS.length)
-    }, 3500)
+      setFade(false)
+      setTimeout(() => {
+        setSayingIdx(prev => (prev + 1) % HUNTER_SAYINGS.length)
+        setFade(true)
+      }, 220)
+    }, 3800)
     return () => clearInterval(timer)
   }, [])
 
@@ -1016,20 +1045,29 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
             fontWeight: '600',
             color: 'var(--color-cream)',
             marginBottom: 'var(--space-lg)',
-            backdropFilter: 'blur(4px)',
-            transition: 'all 0.3s ease'
+            backdropFilter: 'blur(4px)'
           }}>
-            <span style={{ color: 'var(--color-burnt-orange)', fontStyle: 'italic' }}>“{currentSaying.saying}”</span>
-            <span style={{ color: 'var(--color-tan)', opacity: 0.6 }}>•</span>
-            <span style={{ color: 'var(--color-tan)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{currentSaying.tag}</span>
+            <span style={{ color: 'var(--color-burnt-orange)' }}>●</span>
+            <span style={{ color: 'var(--color-tan)', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.75rem' }}>
+              Hunter-to-Hunter Resale • {currentSaying.badge}
+            </span>
           </div>
-          <h1>Flooded timber to elk camp.<br /><span className="text-accent">Gear that survived both.</span></h1>
-          <p>From Stuttgart bottomlands to Rocky Mountain ridges — the nationwide marketplace for field-proven hunting gear.</p>
+          <h1 style={{
+            minHeight: '2.5em',
+            transition: 'opacity 0.22s ease-in-out',
+            opacity: fade ? 1 : 0
+          }}>
+            “{currentSaying.saying}”<br />
+            <span className="text-accent">{currentSaying.resaleLine}</span>
+          </h1>
+          <p>
+            Hunter's Cache is the nationwide resale marketplace built exclusively for hunters. Resell the decoys, optics, saddles, packs, and gear sitting in your garage — or score field-proven gear at true secondhand prices.
+          </p>
           <div className="hero-actions">
-            <button className="btn btn-primary btn-lg" onClick={() => document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' })}>Browse Gear</button>
-            <button className="btn btn-secondary btn-lg" onClick={() => onNavigate('sell')}>Start Selling</button>
+            <button className="btn btn-primary btn-lg" onClick={() => onNavigate('sell')}>+ Start Reselling Gear</button>
+            <button className="btn btn-secondary btn-lg" onClick={() => document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' })}>Browse Resale Gear</button>
           </div>
-          <div className="hero-proof">Free to list <span>•</span> First sale fee waived <span>•</span> 5% after that, capped at $250</div>
+          <div className="hero-proof">Free to list <span>•</span> First sale fee waived <span>•</span> 5% after that, capped at $250 <span>•</span> Zero retail markup</div>
         </div>
       </section>
       <div className="category-bar"><div className="category-bar-inner">
@@ -1039,18 +1077,18 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
           </div>
         ))}
       </div></div>
-      <section className="value-strip" aria-label="How Hunter's Cache works">
-        <div><strong>1. List free</strong><span>Create a game- and region-specific listing.</span></div>
-        <div><strong>2. Reach the right hunters</strong><span>Buyers discover gear made for how and where they hunt.</span></div>
-        <div><strong>3. Transfer responsibly</strong><span>Firearm purchases route through a licensed FFL dealer.</span></div>
+      <section className="value-strip" aria-label="How Hunter's Cache resale works">
+        <div><strong>1. Clear out your cache</strong><span>List extra decoys, stands, packs, and optics for free in 60 seconds.</span></div>
+        <div><strong>2. Hunter-to-hunter resale</strong><span>Buyers discover pre-owned gear tagged by exact game, season, and terrain.</span></div>
+        <div><strong>3. Fund your next tag</strong><span>Protected checkout on gear, with licensed FFL transfer on all regulated firearms.</span></div>
       </section>
-      <div className="section-header" id="marketplace"><h2>{activeCategory?safeCategories.find(c=>c.id===activeCategory)?.name:'Featured Listings'}</h2><span className="section-context">{filteredItems.length} items</span></div>
+      <div className="section-header" id="marketplace"><h2>{activeCategory?safeCategories.find(c=>c.id===activeCategory)?.name:'Featured Resale Listings'}</h2><span className="section-context">{filteredItems.length} items</span></div>
       <div className="marketplace-grid">
         {filteredItems.length === 0 ? (
           <div className="empty-state" style={{ padding: 'var(--space-2xl) var(--space-md)', textAlign: 'center', gridColumn: '1 / -1' }}>
-            <h3>No listings yet{activeCategory ? ` in ${safeCategories.find(c => c.id === activeCategory)?.name}` : ''}</h3>
-            <p>Be the first to list gear in this category for the nationwide browsing-and-listing beta.</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('sell')}>+ Post a Listing</button>
+            <h3>No resale listings yet{activeCategory ? ` in ${safeCategories.find(c => c.id === activeCategory)?.name}` : ''}</h3>
+            <p>Be the first to list pre-owned gear in this category for the nationwide hunting resale beta.</p>
+            <button className="btn btn-primary" onClick={() => onNavigate('sell')}>+ Post a Resale Listing</button>
           </div>
         ) : filteredItems.map(item => (
           <div key={item.id} className="item-card" onClick={() => onViewItem(item)}>
