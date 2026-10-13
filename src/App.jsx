@@ -974,32 +974,38 @@ const HUNTER_SAYINGS = [
   {
     saying: 'Wings cupped. Feet down.',
     resaleLine: 'Resell the spread. Fund next season.',
-    badge: 'Waterfowl · Flooded Timber'
+    badge: 'Waterfowl · Flooded Timber',
+    image: '/assets/hero-timber.jpg'
   },
   {
     saying: 'Wind in your face, cold in the air.',
     resaleLine: 'Sell what you outgrew. Buy what fits.',
-    badge: 'Big Game · Midwest Rut'
+    badge: 'Big Game · Midwest Rut',
+    image: '/assets/hero-hardwoods.jpg'
   },
   {
     saying: 'Bugling in the dark timber.',
     resaleLine: 'Turn unused gear into tag money.',
-    badge: 'Elk · Rocky Mountain Divide'
+    badge: 'Elk · Rocky Mountain Divide',
+    image: '/assets/hero-mountains.jpg'
   },
   {
     saying: 'Heavy packs, earned miles.',
     resaleLine: 'Pass down gear with seasons left.',
-    badge: 'Backcountry · Western Ridges'
+    badge: 'Backcountry · Western Ridges',
+    image: '/assets/hero-backcountry.jpg'
   },
   {
     saying: "Hammerin' on the roost at first light.",
     resaleLine: 'Trade pre-owned gear hunter-to-hunter.',
-    badge: 'Turkey · Spring Woods'
+    badge: 'Turkey · Spring Woods',
+    image: '/assets/hero-springwoods.jpg'
   },
   {
     saying: 'Lock ’em up. Take ’em.',
     resaleLine: 'The dedicated hunting gear resale market.',
-    badge: 'Waterfowl · Mississippi Flyway'
+    badge: 'Waterfowl · Mississippi Flyway',
+    image: '/assets/hero-marsh.jpg'
   },
 ]
 
@@ -1017,7 +1023,7 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
       setTimeout(() => {
         setSayingIdx(prev => (prev + 1) % HUNTER_SAYINGS.length)
         setFade(true)
-      }, 400)
+      }, 450)
     }, 20000)
     return () => clearInterval(timer)
   }, [])
@@ -1030,7 +1036,37 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
   return (
     <>
       <section className="hero-section">
-        <div className="hero-background"><img src="/assets/hero-banner.png" alt="Forest" /></div>
+        <div className="hero-background" style={{ backgroundColor: '#0f1f0f', overflow: 'hidden' }}>
+          <img
+            src="/assets/hero-banner.png"
+            alt="Forest backdrop"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center 30%',
+              opacity: 0.35
+            }}
+          />
+          <img
+            key={currentSaying.image}
+            src={currentSaying.image}
+            alt={currentSaying.badge}
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center 30%',
+              transition: 'opacity 0.9s ease-in-out',
+              opacity: fade ? 1 : 0
+            }}
+          />
+        </div>
         <div className="hero-overlay" />
         <div className="hero-content">
           <div className="hero-saying-pill" style={{
