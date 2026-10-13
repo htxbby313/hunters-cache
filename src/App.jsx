@@ -1017,8 +1017,8 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
       setTimeout(() => {
         setSayingIdx(prev => (prev + 1) % HUNTER_SAYINGS.length)
         setFade(true)
-      }, 220)
-    }, 3800)
+      }, 400)
+    }, 20000)
     return () => clearInterval(timer)
   }, [])
 
@@ -1054,7 +1054,7 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
           </div>
           <h1 style={{
             minHeight: '2.5em',
-            transition: 'opacity 0.22s ease-in-out',
+            transition: 'opacity 0.4s ease-in-out',
             opacity: fade ? 1 : 0
           }}>
             “{currentSaying.saying}”<br />
