@@ -38,11 +38,11 @@ function esc(val) {
 
 async function ensureMarketplaceSchema() {
   const statements = [
-    `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, display_name TEXT NOT NULL, location TEXT, bio TEXT, avatar_url TEXT, is_seller INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, display_name TEXT NOT NULL, location TEXT, bio TEXT, avatar_url TEXT, is_seller INTEGER NOT NULL DEFAULT 0, guntab_email TEXT, identity_status TEXT NOT NULL DEFAULT 'unverified', ffl_status TEXT NOT NULL DEFAULT 'not_applicable', account_status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS game_categories (id TEXT PRIMARY KEY, name TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS regions (id TEXT PRIMARY KEY, name TEXT NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS listings (id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT, price REAL NOT NULL, game_category TEXT NOT NULL, region TEXT, condition TEXT, seller_id TEXT NOT NULL, is_firearm INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (seller_id) REFERENCES users(id))`,
-    `CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, order_number TEXT UNIQUE NOT NULL, listing_id TEXT NOT NULL, buyer_id TEXT NOT NULL, seller_id TEXT NOT NULL, item_title TEXT NOT NULL, item_category TEXT, item_condition TEXT, item_price REAL NOT NULL, shipping_fee REAL NOT NULL DEFAULT 0, platform_fee REAL NOT NULL DEFAULT 0, total REAL NOT NULL, status TEXT NOT NULL, shipping_name TEXT, shipping_address TEXT, shipping_city TEXT, shipping_state TEXT, shipping_zip TEXT, ffl_name TEXT, ffl_address TEXT, tracking_number TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, completed_at TEXT)`,
+    `CREATE TABLE IF NOT EXISTS listings (id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT, price REAL NOT NULL, game_category TEXT NOT NULL, region TEXT, condition TEXT, seller_id TEXT NOT NULL, is_firearm INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'active', image_url TEXT, guntab_listing_type TEXT NOT NULL DEFAULT 'other_non_regulated', created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (seller_id) REFERENCES users(id))`,
+    `CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, order_number TEXT UNIQUE NOT NULL, listing_id TEXT NOT NULL, buyer_id TEXT NOT NULL, seller_id TEXT NOT NULL, item_title TEXT NOT NULL, item_category TEXT, item_condition TEXT, item_price REAL NOT NULL, shipping_fee REAL NOT NULL DEFAULT 0, platform_fee REAL NOT NULL DEFAULT 0, total REAL NOT NULL, status TEXT NOT NULL, shipping_name TEXT, shipping_address TEXT, shipping_city TEXT, shipping_state TEXT, shipping_zip TEXT, ffl_name TEXT, ffl_address TEXT, tracking_number TEXT, payment_provider TEXT, provider_transaction_id TEXT, provider_checkout_url TEXT, provider_status TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, completed_at TEXT)`,
     `CREATE TABLE IF NOT EXISTS offers (id TEXT PRIMARY KEY, listing_id TEXT NOT NULL, buyer_id TEXT NOT NULL, seller_id TEXT NOT NULL, amount REAL NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS reviews (id TEXT PRIMARY KEY, order_id TEXT UNIQUE NOT NULL, seller_id TEXT NOT NULL, buyer_id TEXT NOT NULL, rating INTEGER NOT NULL, comment TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS market_comparables (id TEXT PRIMARY KEY, source_name TEXT NOT NULL, source_id TEXT NOT NULL, source_url TEXT NOT NULL, product_title TEXT NOT NULL, category TEXT NOT NULL, item_condition TEXT, accessories TEXT, sale_price REAL NOT NULL, sold_at TEXT NOT NULL, researched_at TEXT NOT NULL, UNIQUE(source_name, source_id))`,
@@ -55,18 +55,16 @@ async function ensureMarketplaceSchema() {
     `CREATE TABLE IF NOT EXISTS audit_events (id TEXT PRIMARY KEY, actor_id TEXT, action TEXT NOT NULL, entity_type TEXT NOT NULL, entity_id TEXT, metadata TEXT, created_at TEXT NOT NULL)`,
   ];
   for (const statement of statements) await runQuery(statement);
-  if (!usingNetlifyDatabase) {
-    await ensureColumn("users", "guntab_email", "TEXT");
-    await ensureColumn("users", "identity_status", "TEXT NOT NULL DEFAULT 'unverified'");
-    await ensureColumn("users", "ffl_status", "TEXT NOT NULL DEFAULT 'not_applicable'");
-    await ensureColumn("users", "account_status", "TEXT NOT NULL DEFAULT 'active'");
-    await ensureColumn("listings", "image_url", "TEXT");
-    await ensureColumn("listings", "guntab_listing_type", "TEXT NOT NULL DEFAULT 'other_non_regulated'");
-    await ensureColumn("orders", "payment_provider", "TEXT");
-    await ensureColumn("orders", "provider_transaction_id", "TEXT");
-    await ensureColumn("orders", "provider_checkout_url", "TEXT");
-    await ensureColumn("orders", "provider_status", "TEXT");
-  }
+  await ensureColumn("users", "guntab_email", "TEXT");
+  await ensureColumn("users", "identity_status", "TEXT NOT NULL DEFAULT 'unverified'");
+  await ensureColumn("users", "ffl_status", "TEXT NOT NULL DEFAULT 'not_applicable'");
+  await ensureColumn("users", "account_status", "TEXT NOT NULL DEFAULT 'active'");
+  await ensureColumn("listings", "image_url", "TEXT");
+  await ensureColumn("listings", "guntab_listing_type", "TEXT NOT NULL DEFAULT 'other_non_regulated'");
+  await ensureColumn("orders", "payment_provider", "TEXT");
+  await ensureColumn("orders", "provider_transaction_id", "TEXT");
+  await ensureColumn("orders", "provider_checkout_url", "TEXT");
+  await ensureColumn("orders", "provider_status", "TEXT");
   const categories = [["waterfowl", "Waterfowl"], ["big-game", "Big Game"], ["turkey", "Turkey"], ["upland-bird", "Upland Bird"], ["small-game-varmint", "Small Game & Varmint"], ["bowhunting", "Bowhunting"], ["technical-apparel", "Technical Apparel"]];
   const regions = ["Northeast", "Southeast", "Midwest", "West/Rockies", "Southwest", "Pacific NW", "Alaska"];
   for (const [id, name] of categories) await runQuery(`INSERT INTO game_categories (id, name) VALUES (${esc(id)}, ${esc(name)}) ON CONFLICT(id) DO NOTHING`);
@@ -87,9 +85,13 @@ function cleanText(value, max = 2000) {
 }
 
 async function ensureColumn(table, column, definition) {
-  const columns = await runQuery(`PRAGMA table_info(${table})`);
-  if (!columns.some(existing => existing.name === column)) {
-    await runQuery(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  if (usingNetlifyDatabase) {
+    await runQuery(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${definition}`);
+  } else {
+    const columns = await runQuery(`PRAGMA table_info(${table})`);
+    if (!columns.some(existing => existing.name === column)) {
+      await runQuery(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
   }
 }
 
@@ -301,10 +303,10 @@ app.put("/api/auth/me", authenticateToken, async (req, res) => {
 app.get("/api/listings", async (req, res) => {
   try {
     const { category, region } = req.query;
-    let sql = "SELECT * FROM listings WHERE status = 'active'";
-    if (category) sql += ` AND game_category = ${esc(category)}`;
-    if (region) sql += ` AND region = ${esc(region)}`;
-    sql += " ORDER BY created_at DESC";
+    let sql = "SELECT listings.*, users.display_name AS seller_name FROM listings LEFT JOIN users ON users.id = listings.seller_id WHERE listings.status = 'active'";
+    if (category) sql += ` AND listings.game_category = ${esc(category)}`;
+    if (region) sql += ` AND listings.region = ${esc(region)}`;
+    sql += " ORDER BY listings.created_at DESC";
     const data = await runQuery(sql);
     res.json(data);
   } catch (e) {
@@ -491,7 +493,7 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
     const listing = listings[0];
     if (listing.seller_id === req.user.id) return res.status(400).json({ error: "You cannot buy your own listing" });
     if (listing.status !== "active") return res.status(409).json({ error: "This listing is no longer available" });
-    if (!PAYMENT_CONFIGURED) return res.status(503).json({ error: "Checkout is not live until the Hunter's Cache GunTab API key is configured" });
+    if (!PAYMENT_CONFIGURED) return res.status(503).json({ error: "Purchases are not available yet. Online checkout is disabled during the beta while payment provider identity verification is pending." });
     if (!listing.seller_guntab_email) return res.status(409).json({ error: "This seller must connect the verified email on their GunTab account before checkout" });
     if (Number(listing.is_firearm) === 1 && (!FIREARM_CHECKOUT_ENABLED || !FFL_API_KEY)) return res.status(503).json({ error: "Firearm checkout is not live until processor and FFL verification are configured" });
     const shipping = req.body.shipping || {};

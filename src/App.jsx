@@ -478,6 +478,9 @@ const CheckoutView = ({ item, onBack, onNavigate }) => {
 
       <div className="checkout-body">
         <div className="checkout-main">
+          <div className="profile-notice" style={{ marginBottom: 'var(--space-lg)' }}>
+            <strong>Purchases are not available yet.</strong> Online checkout is disabled during our browsing-and-listing beta while bank and identity verification is pending. Orders cannot be submitted at this time. Please message the seller directly.
+          </div>
           <div className="checkout-steps">
             {CHECKOUT_STEPS.map((s, i) => (
               <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -563,9 +566,9 @@ const CheckoutView = ({ item, onBack, onNavigate }) => {
                 onClick={() => setStep(s => s + 1)}
                 style={{ opacity: (step === 0 ? shippingValid : paymentValid) ? 1 : 0.5, cursor: (step === 0 ? shippingValid : paymentValid) ? 'pointer' : 'not-allowed' }}>Continue →</button>
             ) : (
-              <button className="btn btn-primary btn-lg" disabled={!form.agreed || submitting} onClick={placeOrder}
-                style={{ opacity: form.agreed ? 1 : 0.5, cursor: form.agreed ? 'pointer' : 'not-allowed' }}>
-                <Icon id="lock-icon" size={18} /> {submitting ? 'Creating GunTab checkout…' : `Continue — $${(item.price + 12.99).toFixed(2)}`}
+              <button className="btn btn-primary btn-lg" disabled={!paymentValid || !form.agreed || submitting} onClick={placeOrder}
+                style={{ opacity: (paymentValid && form.agreed) ? 1 : 0.5, cursor: (paymentValid && form.agreed) ? 'pointer' : 'not-allowed' }}>
+                <Icon id="lock-icon" size={18} /> {paymentValid ? (submitting ? 'Creating GunTab checkout…' : `Continue — $${(item.price + 12.99).toFixed(2)}`) : 'Purchases are not available yet'}
               </button>
             )}
           </div>
@@ -592,24 +595,6 @@ const CheckoutView = ({ item, onBack, onNavigate }) => {
 }
 
 /* ============================================================
-   SELLER DATA
-   ============================================================ */
-const SELLER_LISTINGS = [
-  { id: "s1", title: "Benelli SBE 3", category: "waterfowl", region: "Southeast", price: 1895, status: "active", views: 234, sales: 0, listed: "2 days ago", isFirearm: true, species: "Waterfowl" },
-  { id: "s2", title: "Sitka Delta Waders", category: "technical-apparel", region: "Pacific NW", price: 399, status: "active", views: 89, sales: 1, listed: "5 days ago", isFirearm: false, species: "Waterfowl" },
-  { id: "s3", title: "Vortex Razor HD", category: "big-game", region: "Rocky Mtn", price: 1299, status: "active", views: 156, sales: 0, listed: "1 week ago", isFirearm: false, species: "Big Game" },
-  { id: "s4", title: "Mathews Phase4 Bow", category: "bowhunting", region: "Midwest", price: 1099, status: "draft", views: 0, sales: 0, listed: "-", isFirearm: false, species: "Big Game" },
-  { id: "s5", title: "Avian-X Decoys (6)", category: "waterfowl", region: "Miss Flyway", price: 175, status: "sold", views: 412, sales: 1, listed: "2 weeks ago", isFirearm: false, species: "Waterfowl" },
-]
-
-const SELLER_ORDERS = [
-  { id: "o1", item: "Benelli SBE 3", orderNum: "HC-48291", buyer: "John D.", buyerLoc: "Stuttgart, AR", date: "Jun 2, 2025", total: 1942.99, status: "pending", isFirearm: true, fflDealer: "Bucks Sporting Goods", fflStatus: "pending", tracking: "" },
-  { id: "o2", item: "Sitka Delta Waders", orderNum: "HC-48102", buyer: "Sarah M.", buyerLoc: "Portland, OR", date: "May 28, 2025", total: 411.99, status: "shipped", isFirearm: false, tracking: "1Z999AA10123456784" },
-  { id: "o3", item: "Vortex Razor HD", orderNum: "HC-47883", buyer: "Mike R.", buyerLoc: "Denver, CO", date: "May 15, 2025", total: 1311.99, status: "delivered", isFirearm: false, tracking: "1Z999AA10987654321" },
-  { id: "o4", item: "Benelli SBE 3", orderNum: "HC-47564", buyer: "Tom W.", buyerLoc: "DeWitt, AR", date: "Apr 30, 2025", total: 1942.99, status: "completed", isFirearm: true, fflDealer: "Delta Arms & Ammo", fflStatus: "completed", tracking: "1Z999AA10543218765" },
-]
-
-/* ============================================================
    SELLER DASHBOARD
    ============================================================ */
 const SellerDashboard = ({ onNewListing, onNavigate, currentUser }) => {
@@ -626,19 +611,20 @@ const SellerDashboard = ({ onNewListing, onNavigate, currentUser }) => {
       try {
         if (getToken()) {
           const [listings, orders, offers] = await Promise.all([
-            apiCall('/api/listings/mine').catch(() => SELLER_LISTINGS),
+            apiCall('/api/listings/mine').catch(() => []),
             apiCall('/api/orders/selling').catch(() => []),
             apiCall('/api/offers/selling').catch(() => []),
           ]);
-          setMyListings(Array.isArray(listings) ? listings : SELLER_LISTINGS);
+          setMyListings(Array.isArray(listings) ? listings : []);
           setMyOrders(Array.isArray(orders) ? orders : []);
           setMyOffers(Array.isArray(offers) ? offers : []);
         } else {
-          setMyListings(SELLER_LISTINGS);
-          setMyOrders(SELLER_ORDERS);
+          setMyListings([]);
+          setMyOrders([]);
+          setMyOffers([]);
         }
       } catch {
-        setMyListings(SELLER_LISTINGS);
+        setMyListings([]);
       } finally {
         setLoading(false);
       }
@@ -662,10 +648,10 @@ const SellerDashboard = ({ onNewListing, onNavigate, currentUser }) => {
   }
 
   const stats = {
-    activeListings: myListings.filter(l => l.status !== 'sold' && l.status !== 'draft').length || myListings.length,
-    totalViews: myListings.reduce((s, l) => s + (l.views || 0), 0) || 479,
-    totalSales: myListings.filter(l => l.status === 'sold').length || 2,
-    revenue: myListings.filter(l => l.status === 'sold').reduce((s, l) => s + (l.price || 0), 0) || 574,
+    activeListings: myListings.filter(l => l.status !== 'sold' && l.status !== 'draft').length,
+    totalViews: myListings.reduce((s, l) => s + (l.views || 0), 0),
+    totalSales: myListings.filter(l => l.status === 'sold').length,
+    revenue: myListings.filter(l => l.status === 'sold').reduce((s, l) => s + (Number(l.price) || 0), 0),
   };
 
   return (
@@ -919,7 +905,7 @@ const ListingForm = ({ onBack }) => {
         </div>}
 
         {step===3&&<div className="form-card"><h2>Final Details</h2>
-          <div className="form-group"><label>Main photo URL</label><input type="url" value={form.imageUrl} onChange={e=>update('imageUrl',e.target.value)} placeholder="https://..."/><div className="hint">Use a public image URL for the closed beta. Direct uploads will be enabled with production storage.</div></div>
+          <div className="form-group"><label>Main photo URL</label><input type="url" value={form.imageUrl} onChange={e=>update('imageUrl',e.target.value)} placeholder="https://..."/><div className="hint">Beta notice: Enter a public image URL (e.g. Unsplash, Imgur, or direct image link). Direct file uploads will be introduced with production object storage.</div></div>
           <div className="form-group"><label><span style={{display:'flex',alignItems:'center',gap:8}}><input type="checkbox" checked={form.isFirearm} onChange={e=>update('isFirearm',e.target.checked)} style={{width:'auto'}}/> Firearm (FFL required)</span></label></div>
           <div className="form-group"><label>GunTab merchandise type</label><select value={form.gunTabListingType} onChange={e=>update('gunTabListingType',e.target.value)}>{GUNTAB_TYPES.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></div>
           {form.isFirearm&&<div className="ffl-section"><div className="ffl-title"><Icon id="firearm-icon" size={20}/> FFL Required</div><div className="ffl-note">Buyer selects a licensed dealer during checkout.</div></div>}
@@ -1011,16 +997,39 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
         <div><strong>3. Transfer responsibly</strong><span>Firearm purchases route through a licensed FFL dealer.</span></div>
       </section>
       <div className="section-header" id="marketplace"><h2>{activeCategory?safeCategories.find(c=>c.id===activeCategory)?.name:'Featured Listings'}</h2><span className="section-context">{filteredItems.length} items</span></div>
-      <div className="marketplace-grid">{filteredItems.map(item=>(
-        <div key={item.id} className="item-card" onClick={()=>onViewItem(item)}>
-          <div className="item-card-image">{item.image_url ? <img src={item.image_url} alt={item.title} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <div className="icon-wrapper"><Icon id={item.is_firearm?'firearm-icon':mapCategoryIcon(item.game_category)} size={36}/></div>}<span className="item-card-badge featured">{item.is_firearm?'FFL Required':'New'}</span></div>
-          <div className="item-card-body">
-            <h3>{item.title}</h3><div className="item-card-category">{item.game_category}</div>
-            <div className="item-card-meta"><div className="item-card-location"><Icon id="region-icon" size={12}/><span>{item.region}</span></div><span className="divider"/><span>Verified</span></div>
-            <div className="item-card-footer"><div className="item-card-price">${item.price}</div><Stars rating={4.5}/></div>
+      <div className="marketplace-grid">
+        {filteredItems.length === 0 ? (
+          <div className="empty-state" style={{ padding: 'var(--space-2xl) var(--space-md)', textAlign: 'center', gridColumn: '1 / -1' }}>
+            <h3>No listings yet{activeCategory ? ` in ${safeCategories.find(c => c.id === activeCategory)?.name}` : ''}</h3>
+            <p>Be the first to list gear in this category for the nationwide browsing-and-listing beta.</p>
+            <button className="btn btn-primary" onClick={() => onNavigate('sell')}>+ Post a Listing</button>
           </div>
-        </div>
-      ))}</div>
+        ) : filteredItems.map(item => (
+          <div key={item.id} className="item-card" onClick={() => onViewItem(item)}>
+            <div className="item-card-image">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div className="icon-wrapper"><Icon id={item.is_firearm ? 'firearm-icon' : mapCategoryIcon(item.game_category)} size={36} /></div>
+              )}
+              <span className="item-card-badge featured">{item.is_firearm ? 'FFL Required' : (item.condition || 'Available')}</span>
+            </div>
+            <div className="item-card-body">
+              <h3>{item.title}</h3>
+              <div className="item-card-category">{item.game_category}</div>
+              <div className="item-card-meta">
+                <div className="item-card-location"><Icon id="region-icon" size={12} /><span>{item.region}</span></div>
+                <span className="divider" />
+                <span>{item.condition || 'Pre-owned'}</span>
+              </div>
+              <div className="item-card-footer">
+                <div className="item-card-price">${item.price}</div>
+                {item.seller_rating ? <Stars rating={item.seller_rating} /> : <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{item.seller_name || 'Seller'}</span>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </>
   )
 }
@@ -1079,7 +1088,8 @@ const DetailView = ({ item, onBack, onNavigate }) => {
           <div className="listing-price-large">${item.price}</div>
           <div className="item-card-meta" style={{marginBottom:16}}>
             <div className="item-card-location"><Icon id="region-icon" size={14}/><span>{item.region}</span></div>
-            <span className="divider"/><Stars rating={4.8}/><span className="divider"/><span>Verified</span>
+            <span className="divider"/><span>{item.condition || 'Pre-owned'}</span>
+            {item.seller_rating && <><span className="divider"/><Stars rating={item.seller_rating}/></>}
           </div>
           <p className="listing-description">{item.description||`Excellent condition ${item.title}.`}</p>
           <button className="seller-link-card" onClick={() => onNavigate('seller', { id: item.seller_id || 'demo', listing: item })}>
@@ -1087,7 +1097,7 @@ const DetailView = ({ item, onBack, onNavigate }) => {
             <span><strong>{item.seller_name || 'View seller profile'}</strong><small>Listings, completed sales, and buyer feedback →</small></span>
           </button>
           <div className="listing-details-grid">
-            <div className="detail-item"><div className="label">Condition</div><div className="value">Excellent</div></div>
+            <div className="detail-item"><div className="label">Condition</div><div className="value">{item.condition || 'Pre-owned'}</div></div>
             <div className="detail-item"><div className="label">Region</div><div className="value">{item.region}</div></div>
             <div className="detail-item"><div className="label">Category</div><div className="value">{item.game_category}</div></div>
             <div className="detail-item"><div className="label">FFL</div><div className="value">{item.is_firearm?'Yes':'No'}</div></div>
@@ -1107,13 +1117,23 @@ const DetailView = ({ item, onBack, onNavigate }) => {
               </div>)}
             </details>}
           </div>
+          <div className="profile-notice" style={{ marginBottom: 'var(--space-md)' }}>
+            <strong>Beta notice:</strong> Purchases are not available yet while payment verification is pending. Please contact the seller below to inquire or discuss this listing.
+          </div>
           <div className="listing-actions">
-            <button className="btn btn-primary btn-lg" onClick={()=>onNavigate('checkout',item)}>Buy Now — ${item.price}</button>
-            <button className="btn btn-secondary btn-lg" disabled={!marketPrice?.available} onClick={offerMarketPrice}>
-              {marketPrice?.available ? `Offer Market Price — $${marketPrice.estimate.toFixed(2)}` : 'Market Offer Unavailable'}
+            <button className="btn btn-primary btn-lg" onClick={contactSeller}>
+              Message Seller
+            </button>
+            <button className="btn btn-outline btn-lg" disabled title="Purchases are not available yet" style={{ opacity: 0.65, cursor: 'not-allowed' }}>
+              Purchases not available yet
             </button>
           </div>
-          <div className="listing-actions"><button className="btn btn-outline" onClick={contactSeller}>Message seller</button><button className="btn btn-outline" onClick={reportListing}>Report listing</button></div>
+          <div className="listing-actions">
+            <button className="btn btn-secondary" disabled={!marketPrice?.available} onClick={offerMarketPrice}>
+              {marketPrice?.available ? `Offer Market Price — $${marketPrice.estimate.toFixed(2)}` : 'Market Offer Unavailable'}
+            </button>
+            <button className="btn btn-outline" onClick={reportListing}>Report listing</button>
+          </div>
           {offerStatus && <div className="profile-notice">{offerStatus}</div>}
         </div>
       </div>
