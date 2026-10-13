@@ -970,14 +970,33 @@ const ListingForm = ({ onBack }) => {
   )
 }
 
+const HUNTER_SAYINGS = [
+  { saying: 'Wings cupped. Feet down.', tag: 'Waterfowl · Flooded Timber' },
+  { saying: 'Wind in your face, cold in the air.', tag: 'Big Game · Midwest Rut' },
+  { saying: 'Bugling in the dark timber.', tag: 'Elk · Rocky Mountain Divide' },
+  { saying: 'Heavy packs, earned miles.', tag: 'Backcountry · Western Ridges' },
+  { saying: "Hammerin' on the roost at first light.", tag: 'Turkey · Spring Woods' },
+  { saying: 'Lock ’em up. Take ’em.', tag: 'Waterfowl · Mississippi Flyway' },
+]
+
 /* ============================================================
    HOMEPAGE VIEW
    ============================================================ */
 const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
   const [activeCategory, setActiveCategory] = useState(null)
+  const [sayingIdx, setSayingIdx] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSayingIdx(prev => (prev + 1) % HUNTER_SAYINGS.length)
+    }, 3500)
+    return () => clearInterval(timer)
+  }, [])
+
   const safeCategories = Array.isArray(categories) ? categories : []
   const safeItems = Array.isArray(items) ? items : []
   const filteredItems = activeCategory ? safeItems.filter(i => i.game_category === activeCategory) : safeItems
+  const currentSaying = HUNTER_SAYINGS[sayingIdx]
 
   return (
     <>
@@ -985,9 +1004,27 @@ const HomeView = ({ items, categories, onViewItem, onNavigate }) => {
         <div className="hero-background"><img src="/assets/hero-banner.png" alt="Forest" /></div>
         <div className="hero-overlay" />
         <div className="hero-content">
-          <span className="hero-badge">Every game • Every season • Every region</span>
-          <h1>Buy better gear.<br /><span className="text-accent">Sell what you outgrew.</span></h1>
-          <p>The nationwide marketplace organized around the game, season, and region you hunt.</p>
+          <div className="hero-saying-pill" style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 18px',
+            background: 'rgba(200, 90, 23, 0.18)',
+            border: '1px solid rgba(200, 90, 23, 0.45)',
+            borderRadius: '999px',
+            fontSize: '0.85rem',
+            fontWeight: '600',
+            color: 'var(--color-cream)',
+            marginBottom: 'var(--space-lg)',
+            backdropFilter: 'blur(4px)',
+            transition: 'all 0.3s ease'
+          }}>
+            <span style={{ color: 'var(--color-burnt-orange)', fontStyle: 'italic' }}>“{currentSaying.saying}”</span>
+            <span style={{ color: 'var(--color-tan)', opacity: 0.6 }}>•</span>
+            <span style={{ color: 'var(--color-tan)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{currentSaying.tag}</span>
+          </div>
+          <h1>Flooded timber to elk camp.<br /><span className="text-accent">Gear that survived both.</span></h1>
+          <p>From Stuttgart bottomlands to Rocky Mountain ridges — the nationwide marketplace for field-proven hunting gear.</p>
           <div className="hero-actions">
             <button className="btn btn-primary btn-lg" onClick={() => document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' })}>Browse Gear</button>
             <button className="btn btn-secondary btn-lg" onClick={() => onNavigate('sell')}>Start Selling</button>
