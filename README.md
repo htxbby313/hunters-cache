@@ -1,44 +1,54 @@
 # Hunter's Cache
 
-Nationwide hunting marketplace for all game, seasons, and U.S. regions. The closed-beta application includes seller profiles and buyer-only reviews, listings, evidence-based market-price offers, buyer–seller messaging, GunTab protected checkout, shipment tracking, disputes, moderation queues, verification records, policies, audit events, and seller/operations analytics.
+A nationwide hunting gear resale marketplace built for hunters across game, season, and region. The product brings marketplace workflows, practical operations tooling, and trust controls together in one web application.
 
-Production domain: `https://hunterscacheusa.com`. The current website DNS points to Squarespace; Google mail records must be preserved when the application host is connected.
+[Visit the live site](https://hunterscacheusa.com/) · [View the source repository](https://github.com/htxbby313/hunters-cache)
 
-## Local development
+## Product highlights
+
+- Browse and search gear across hunting categories, seasons, and U.S. regions.
+- Create listings and seller profiles, then connect through buyer–seller messaging.
+- Keep reviews tied to verified completed orders; show honest empty states when there is no marketplace activity.
+- Provide operations tools for moderation, disputes, verification records, and audit events.
+- Keep paid and firearm checkout gated until payment, compliance, and fulfillment providers are ready.
+
+## Technology
+
+- **Frontend:** React 19, Vite, JavaScript, CSS
+- **Application API:** Node.js, Express, serverless-http
+- **Data:** PostgreSQL in production, SQLite for local development
+- **Hosting:** Netlify Functions and static hosting
+- **Other:** JWT authentication, bcrypt password hashing, FFL lookup proxy
+
+## Architecture
+
+The React client is built into `dist/`. Express routes are adapted to Netlify Functions for production, with `netlify.toml` routing `/api/*` requests to the API function. The same Express server can serve the built client during local or container deployments. PostgreSQL is selected when `DATABASE_URL` is configured; local development can use SQLite.
+
+The FFL validation endpoint is implemented as a server-side provider proxy. It requires the provider key in the hosting environment. Firearm checkout remains disabled until provider, payment, policy, and end-to-end transaction gates are satisfied.
+
+## Run locally
+
+Requirements: Node.js 22 or later and npm.
 
 ```powershell
 npm install
 npm run dev
 ```
 
-The Vite client runs on port 5173. The Express server serves `dist` on port 3000. Production uses Neon PostgreSQL through `DATABASE_URL`; local development uses SQLite at `data/hunters-cache.db` when that variable is absent.
+To build the production frontend:
 
 ```powershell
 npm run build
-$env:JWT_SECRET = "replace-with-a-long-random-secret"
+```
+
+For the Express server, copy `.env.example` to `.env`, set local values, then run:
+
+```powershell
 npm run server
 ```
 
-Copy `.env.example` to `.env` and supply secrets through the hosting platform rather than committing them. Never use the development JWT fallback in production.
+Never commit `.env` files or production credentials. Use the documented placeholders in `.env.example` and configure real secrets in the hosting environment.
 
-## GunTab checkout
+## Project status
 
-1. Create the Hunter's Cache GunTab account and verify its email and business bank account.
-2. Create a **test** API key and set `GUNTAB_API_TOKEN` while testing.
-3. Each seller creates their own GunTab account, verifies it, and saves that exact email in Seller Dashboard.
-4. Run an end-to-end test: listing → order → GunTab checkout → order sync.
-5. Only after approval, replace the test key with a live key and set the final HTTPS `PUBLIC_APP_URL`.
-6. Configure the signed webhook URL as `https://YOUR-DOMAIN/api/webhooks/guntab`, save its `ssk_...` signing secret as `GUNTAB_WEBHOOK_SECRET`, and test every important transaction status from GunTab.
-
-Hunter's Cache charges sellers 0% on their first completed sale, then 5% capped at $250. GunTab's own service/payment fees are separate and are shown by GunTab during checkout.
-
-## Closed-beta limits
-
-- Firearm checkout remains off until `FFL_API_KEY` is configured and `ENABLE_FIREARM_CHECKOUT=true`.
-- Listing photos currently use public image URLs; production file uploads require durable object storage.
-- Carrier-label purchasing, automated content classification, tax registrations, provider contracts, and legal-policy approval still need to be completed before a public launch.
-- The app cannot be called live merely because it builds; verify the deployed domain, GunTab live key, database persistence, and a real end-to-end transaction first.
-
-See `OPERATIONS.md` for transaction, verification, dispute, moderation, privacy, daily-operations, and launch-gate policies.
-
-See [../PROFITABILITY_PLAN.md](../PROFITABILITY_PLAN.md) for the recommended launch wedge, unit-economics targets, and 90-day operating plan.
+Hunter's Cache is in a browsing-and-listing beta. A public website and successful deployment do not mean checkout or regulated transactions are ready. Payment processing, FFL provider access, durable image storage, policy review, backups, monitoring, and a real end-to-end transaction remain separate launch gates. See [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md) and [`OPERATIONS.md`](OPERATIONS.md) for project status and operating boundaries.
