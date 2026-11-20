@@ -1,30 +1,45 @@
 # Hunter's Cache
 
-A nationwide hunting gear resale marketplace built for hunters across game, season, and region. The product brings marketplace workflows, practical operations tooling, and trust controls together in one web application.
+**A nationwide hunting gear resale marketplace built for hunters across game, season, and region.** This project combines a polished customer experience with the marketplace, security, and operations foundations needed to support a real product.
 
-[Visit the live site](https://hunterscacheusa.com/) · [View the source repository](https://github.com/htxbby313/hunters-cache)
+[Live website](https://hunterscacheusa.com/) · [GitHub repository](https://github.com/htxbby313/hunters-cache)
 
-## Product highlights
+## Website screenshots
 
-- Browse and search gear across hunting categories, seasons, and U.S. regions.
-- Create listings and seller profiles, then connect through buyer–seller messaging.
-- Keep reviews tied to verified completed orders; show honest empty states when there is no marketplace activity.
-- Provide operations tools for moderation, disputes, verification records, and audit events.
-- Keep paid and firearm checkout gated until payment, compliance, and fulfillment providers are ready.
+### Homepage
+
+![Hunter's Cache production homepage](docs/screenshots/homepage-full-page.png)
+
+### Homepage at a glance
+
+![Hunter's Cache homepage viewport](docs/screenshots/homepage-viewport.png)
+
+*Screenshots captured from the public production site on November 20, 2026.*
+
+## What I built
+
+- A responsive marketplace for browsing and listing pre-owned hunting gear.
+- Discovery organized around game, season, terrain, and region.
+- Seller profiles and buyer–seller messaging.
+- Authentication and authorization for account, listing, and messaging flows.
+- Operations foundations for moderation, disputes, verification records, and audit events.
+- Evidence-based market-price research and honest empty states rather than seeded sales or reviews.
 
 ## Technology
 
-- **Frontend:** React 19, Vite, JavaScript, CSS
-- **Application API:** Node.js, Express, serverless-http
-- **Data:** PostgreSQL in production, SQLite for local development
-- **Hosting:** Netlify Functions and static hosting
-- **Other:** JWT authentication, bcrypt password hashing, FFL lookup proxy
+| Area | Stack |
+| --- | --- |
+| Frontend | React 19, Vite, JavaScript, CSS |
+| API | Node.js, Express, serverless-http |
+| Data | PostgreSQL in production; SQLite for local development |
+| Hosting | Netlify static hosting and Functions |
+| Security | JWT authentication, bcrypt password hashing, server-side provider credentials |
 
-## Architecture
+## Architecture and engineering
 
-The React client is built into `dist/`. Express routes are adapted to Netlify Functions for production, with `netlify.toml` routing `/api/*` requests to the API function. The same Express server can serve the built client during local or container deployments. PostgreSQL is selected when `DATABASE_URL` is configured; local development can use SQLite.
+The React client builds into `dist/`. Express API routes run locally with Node and are adapted to Netlify Functions for production. `netlify.toml` routes API requests to the serverless API and publishes the built client. PostgreSQL is used when `DATABASE_URL` is configured; local development can use SQLite.
 
-The FFL validation endpoint is implemented as a server-side provider proxy. It requires the provider key in the hosting environment. Firearm checkout remains disabled until provider, payment, policy, and end-to-end transaction gates are satisfied.
+The codebase includes validation and operational safeguards around sensitive marketplace workflows. Provider credentials stay server-side, and checkout remains gated until payment, fulfillment, policy, and end-to-end transaction requirements are met.
 
 ## Run locally
 
@@ -35,7 +50,7 @@ npm install
 npm run dev
 ```
 
-To build the production frontend:
+Build the production frontend with:
 
 ```powershell
 npm run build
@@ -47,8 +62,14 @@ For the Express server, copy `.env.example` to `.env`, set local values, then ru
 npm run server
 ```
 
-Never commit `.env` files or production credentials. Use the documented placeholders in `.env.example` and configure real secrets in the hosting environment.
+Never commit `.env` files or production credentials. Configure real secrets through the hosting platform.
 
 ## Project status
 
-Hunter's Cache is in a browsing-and-listing beta. A public website and successful deployment do not mean checkout or regulated transactions are ready. Payment processing, FFL provider access, durable image storage, policy review, backups, monitoring, and a real end-to-end transaction remain separate launch gates. See [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md) and [`OPERATIONS.md`](OPERATIONS.md) for project status and operating boundaries.
+Hunter's Cache is in a browsing-and-listing beta. The production site is publicly accessible, while paid and firearm checkout remain disabled pending provider, compliance, storage, and operational launch gates. A deployed website does not by itself establish transaction readiness. See [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md) and [`OPERATIONS.md`](OPERATIONS.md) for current project boundaries.
+
+## Copyright and reuse
+
+Original Hunter's Cache source code and project materials are **Copyright © 2026 Tay Coleman. All rights reserved.** No license is granted to copy, modify, redistribute, or create derivative works from those materials. Third-party libraries and assets remain subject to their own licenses and terms.
+
+This public repository can still be viewed and forked through GitHub under GitHub's platform terms; that does not grant broader reuse rights. See [`LICENSE`](LICENSE).
