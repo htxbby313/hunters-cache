@@ -1,0 +1,23 @@
+# Netlify configuration for the FFL locator
+# -------------------------------------------------
+# This file tells Netlify how to expose the serverless function
+# that returns nearby Federal Firearms Licensees.
+# It assumes the project root is the folder containing this netlify.toml.
+
+[build]
+  # Netlify will automatically bundle any JavaScript files placed under
+  # "netlify/functions" as serverless functions.
+  functions = "netlify/functions"
+  # No custom build step required for the zero‑cost locator.
+
+# Optional redirects – ensure the function can be reached via /api/ffl/nearby
+[[redirects]]
+  from = "/api/ffl/nearby"
+  to = "/.netlify/functions/ffl_nearby"
+  status = 200
+  force = true
+  # keep query string
+  query = { }
+
+# If you have other functions (e.g., existing validate‑ffl), they will also be
+# available under the same directory without extra configuration.
